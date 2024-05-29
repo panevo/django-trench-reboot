@@ -3,21 +3,21 @@ botocore
 djangorestframework
 django-environ
 django-cors-headers
-djangorestframework-simplejwt>=4.8.0
-pyotp>=2.6.0
-twilio>=7.0.0
-yubico-client>=1.13.0
-smsapi-client>=2.4.5
-pyjwt<=2.0.1
+djangorestframework-simplejwt
+pyotp
+twilio
+yubico-client
+smsapi-client
+pyjwt
 
 drf-spectacular
 
-pytest==6.2.5
-pytest-cov==2.11.1
+pytest
+pytest-cov
 pytest-django
-attrs==20.3.0
-coverage==5.5
-flaky==3.7.0
+attrs
+coverage
+flaky
 
 isort
 flake8
