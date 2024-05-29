@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.3.2 (2024-05-29)
+==================
+
+* Update project details
+* Provide Django 4.2 support, remove Django 2.x and Python <3.8 support
+
 
 0.3.1 (2022-02-23)
 ==================
