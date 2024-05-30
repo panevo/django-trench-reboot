@@ -1,9 +1,8 @@
 boto3
 botocore
-djangorestframework
 django-environ
 django-cors-headers
-djangorestframework-simplejwt
+djangorestframework-simplejwt>=4.3.0
 pyotp
 twilio
 yubico-client
