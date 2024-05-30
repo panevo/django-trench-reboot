@@ -1,7 +1,7 @@
 boto3
 botocore
 django-environ
-django-cors-headers
+django-cors-headers>=3.10.0
 djangorestframework-simplejwt>=4.3.0
 pyotp
 twilio
