@@ -38,7 +38,6 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install mypy flake8 pytest pytest-xdist flaky
         python -m pip install Django==${{ matrix.django-version }}
-        python -m pip install djangorestframework==${{ matrix.drf-version }}
         if [ -f trench/test-requirements.txt ]; then pip install -r trench/test-requirements.txt; fi
         ln -s $(pwd)/trench/ $(pwd)/testproject/trench
     - name: Lint trench package with flake8
