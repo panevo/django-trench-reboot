@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.3.3 (2024-05-31)
+==================
+
+* Remove development commits from build
+
+0.3.2 (2024-05-29) (do not use)
+==================
+
+* Update project details
+* Provide Django 4.2 support, remove Django 2.x and Python <3.8 support
 
 0.3.1 (2022-02-23)
 ==================

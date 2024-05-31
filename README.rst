@@ -30,6 +30,10 @@ django-trench
 
 | Developers can easily add their own authentication backends supporting any communication channel.
 
+| This is a fork of `django_trench`_. As this package has gone unmaintained for some time, we have decided to maintain a temporary package in order to provide support for Django 4.2 and beyond (if necessary).
+
+.. _`django_trench`: https://github.com/pmclanahan/django-celery-email
+
 Features
 ********
 
@@ -40,9 +44,9 @@ Features
 Supported versions
 ******************
 
-* Python 3.7, 3.8, 3.9
-* Django 2.0, 2.1, 2.2, 3.0
-* Django REST Framework 3.10
+* Python 3.8, 3.9, 3.10
+* Django 3.0, 3.1, 3.2, 4.0, 4.1
+* Django REST Framework 3.10, 3.11, 3.12, 3.13, 3.14
 
 | If you are going to use JWT authentication:
 
