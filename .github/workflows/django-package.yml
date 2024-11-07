@@ -1,4 +1,4 @@
-name: 'Lint and test'
+name: "Lint and test"
 
 on:
   push:
@@ -12,43 +12,44 @@ jobs:
       SECRET_KEY: this_is_no_secret_at_all
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        django-version: ["3.0.14", "3.1.14", "3.2.25", "4.0.10", "4.1.13", "4.2.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        django-version:
+          ["3.0.14", "3.1.14", "3.2.25", "4.0.10", "4.1.13", "4.2.16"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install mypy flake8 pytest pytest-xdist flaky
-        python -m pip install Django==${{ matrix.django-version }}
-        if [ -f trench/test-requirements.txt ]; then pip install -r trench/test-requirements.txt; fi
-        ln -s $(pwd)/trench/ $(pwd)/testproject/trench
-    - name: Lint trench package with flake8
-      run: |
-        # Stop the build if there are Python syntax errors or undefined names.
-        flake8 ./trench/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide.
-        flake8 ./trench/ --count --exit-zero --max-complexity=10 --statistics
-    - name: Check trench package's type hints with mypy
-      run: |
-        mypy ./trench/
-    - name: Lint testproject with flake8
-      run: |
-        # Stop the build if there are Python syntax errors or undefined names.
-        flake8 ./testproject/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide.
-        flake8 ./testproject/ --count --exit-zero --max-complexity=10 --statistics
-    - name: Check testproject's type hints with mypy
-      run: |
-        mypy ./testproject/
-    - name: Test with pytest
-      run: |
-        python -m pytest -n 8 --cov-report=xml --cov=testproject/trench testproject/tests/
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install mypy flake8 pytest pytest-xdist flaky
+          python -m pip install Django==${{ matrix.django-version }}
+          if [ -f trench/test-requirements.txt ]; then pip install -r trench/test-requirements.txt; fi
+          ln -s $(pwd)/trench/ $(pwd)/testproject/trench
+      - name: Lint trench package with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names.
+          flake8 ./trench/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide.
+          flake8 ./trench/ --count --exit-zero --max-complexity=10 --statistics
+      - name: Check trench package's type hints with mypy
+        run: |
+          mypy ./trench/
+      - name: Lint testproject with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names.
+          flake8 ./testproject/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide.
+          flake8 ./testproject/ --count --exit-zero --max-complexity=10 --statistics
+      - name: Check testproject's type hints with mypy
+        run: |
+          mypy ./testproject/
+      - name: Test with pytest
+        run: |
+          python -m pytest -n 8 --cov-report=xml --cov=testproject/trench testproject/tests/
     # - uses: codecov/codecov-action@v1
     #   with:
     #     files: ./coverage.xml
