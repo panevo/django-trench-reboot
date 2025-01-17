@@ -16,11 +16,11 @@ django-trench
 .. image:: https://readthedocs.org/projects/django-trench/badge/?version=latest
    :target: https://django-trench.readthedocs.io/en/latest/?badge=latest
 
-.. image:: https://img.shields.io/pypi/v/django-trench
-   :target: https://pypi.org/project/django-trench/
+.. image:: https://img.shields.io/pypi/v/django-trench-reboot
+   :target: https://pypi.org/project/django-trench-reboot/
 
 | **django-trench** provides a set of REST API endpoints to supplement `django-rest-framework`_ with multi-factor authentication (MFA, 2FA). It supports both standard built-in authentication methods, as well as JWT (JSON Web Token).
-
+|
 | We deliver a couple of sample secondary authentication methods including sending OTP based code by:
 
 * E-mail
@@ -29,7 +29,7 @@ django-trench
 * `YubiKey`_
 
 | Developers can easily add their own authentication backends supporting any communication channel.
-
+|
 | This is a fork of `django_trench`_. As this package has gone unmaintained for some time, we have decided to maintain a temporary package in order to provide support for Django 4.2 and beyond (if necessary).
 
 .. _`django_trench`: https://github.com/pmclanahan/django-celery-email
