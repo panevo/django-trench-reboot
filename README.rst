@@ -32,7 +32,7 @@ django-trench
 |
 | This is a fork of `django_trench`_. As this package has gone unmaintained for some time, we have decided to maintain a temporary package in order to provide support for Django 4.2 and beyond (if necessary).
 
-.. _`django_trench`: https://github.com/pmclanahan/django-celery-email
+.. _`django_trench`: https://github.com/merixstudio/django-trench
 
 Features
 ********
