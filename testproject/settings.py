@@ -2,6 +2,8 @@ import datetime
 import environ
 import os
 
+from trench import __version__
+
 
 root = environ.Path(__file__) - 1
 env = environ.Env()
@@ -25,7 +27,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
-    "drf_yasg",
+    "drf_spectacular",
     "testapp",
     "trench",
 ]
@@ -99,8 +101,17 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Django Trench example app API",
+    "DESCRIPTION": "This example illustrates the usage of Django Trench package",
+    "VERSION": __version__,
+    "SERVE_INCLUDE_SCHEMA": False,
+    "CONTACT": {"email": "code@merixstudio.com"},
+    "LICENSE": {"name": "MIT License"},
+}
+
 
 AUTH_USER_MODEL = "testapp.User"
 
@@ -121,11 +132,11 @@ TRENCH_AUTH = {
     "CONFIRM_BACKUP_CODES_REGENERATION_WITH_CODE": True,
     "BACKUP_CODES_CHARACTERS": "0123456789",
     "BACKUP_CODES_QUANTITY": 8,
-    "DEFAULT_VALIDITY_PERIOD": 60,
+    "DEFAULT_VALIDITY_PERIOD": 600,
     "MFA_METHODS": {
         "sms_twilio": {
             "VERBOSE_NAME": "sms",
-            "VALIDITY_PERIOD": 60,
+            "VALIDITY_PERIOD": 600,
             "HANDLER": "trench.backends.twilio.TwilioMessageDispatcher",
             "SOURCE_FIELD": "phone_number",
             "TWILIO_VERIFIED_FROM_NUMBER": env(
@@ -135,7 +146,7 @@ TRENCH_AUTH = {
         },
         "sms_api": {
             "VERBOSE_NAME": "sms",
-            "VALIDITY_PERIOD": 60,
+            "VALIDITY_PERIOD": 600,
             "HANDLER": "trench.backends.sms_api.SMSAPIMessageDispatcher",
             "SOURCE_FIELD": "phone_number",
             "SMSAPI_ACCESS_TOKEN": "token",
@@ -143,7 +154,7 @@ TRENCH_AUTH = {
         },
         "email": {
             "VERBOSE_NAME": "email",
-            "VALIDITY_PERIOD": 60,
+            "VALIDITY_PERIOD": 600,
             "HANDLER": "trench.backends.basic_mail.SendMailMessageDispatcher",
             "SOURCE_FIELD": "email",
             "EMAIL_SUBJECT": "Your verification code",
@@ -152,7 +163,7 @@ TRENCH_AUTH = {
         },
         "app": {
             "VERBOSE_NAME": "app",
-            "VALIDITY_PERIOD": 60,
+            "VALIDITY_PERIOD": 600,
             "USES_THIRD_PARTY_CLIENT": True,
             "HANDLER": "trench.backends.application.ApplicationMessageDispatcher",
         },
