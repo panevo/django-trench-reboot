@@ -12,7 +12,7 @@ setup(
     description="REST Multi-factor authentication package for Django",
     long_description=open("README.rst").read(),
     long_description_content_type="text/x-rst",
-    url="https://github.com/Panevo/django-trench",
+    url="https://github.com/Panevo/django-trench-reboot",
     author="Karlo Krakan",
     author_email="karlo.krakan@panevo.com",
     install_requires=[
