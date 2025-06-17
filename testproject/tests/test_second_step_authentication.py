@@ -64,12 +64,6 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
     )
     assert response_second_step.status_code == HTTP_401_UNAUTHORIZED
 
-    # Get a fresh ephemeral token after sleep
-    response_first_step = client._first_factor_request(user=active_user_with_email_otp)
-    ephemeral_token = client._extract_ephemeral_token_from_response(
-        response=response_first_step
-    )
-
     response_second_step = client._second_factor_request(
         handler=handler, ephemeral_token=ephemeral_token
     )

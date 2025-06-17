@@ -76,10 +76,8 @@ class AbstractMessageDispatcher(ABC):
         return self._get_otp().verify(otp=code)
 
     def _get_otp(self) -> TOTP:
-        # Always create a fresh TOTP object with current settings
-        interval = self._get_valid_window()
         return create_otp_command(
-            secret=self._mfa_method.secret, interval=interval
+            secret=self._mfa_method.secret, interval=self._get_valid_window()
         )
 
     def _get_valid_window(self) -> int:

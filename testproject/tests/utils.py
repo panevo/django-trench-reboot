@@ -40,14 +40,10 @@ class TrenchAPIClient(APIClient):
         response = self._first_factor_request(user=user, path=path)
         ephemeral_token = self._extract_ephemeral_token_from_response(response=response)
         handler = get_mfa_handler(mfa_method=mfa_method)
-        # Always generate a fresh code at the moment of authentication
-        code = handler.create_code()
         response = self._second_factor_request(
-            code=code, ephemeral_token=ephemeral_token, path=path_2nd_factor
+            handler=handler, ephemeral_token=ephemeral_token, path=path_2nd_factor
         )
-        # Ensure JWT token is updated
-        if response.status_code == 200:
-            self._update_jwt_from_response(response=response)
+        self._update_jwt_from_response(response=response)
         return response
 
     def _first_factor_request(
@@ -71,16 +67,11 @@ class TrenchAPIClient(APIClient):
     ) -> Response:
         if handler is None and code is None:
             raise ValueError("handler and code can't be None simultaneously")
-
-        # Always generate a fresh code when handler is provided
-        if code is None and handler is not None:
-            code = handler.create_code()
-
         return self.post(
             path=path,
             data={
                 "ephemeral_token": ephemeral_token,
-                "code": code,
+                "code": handler.create_code() if code is None else code,  # type: ignore
             },
             format="json",
         )
