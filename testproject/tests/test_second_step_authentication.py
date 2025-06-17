@@ -43,12 +43,14 @@ def test_mfa_model(active_user_with_email_otp):
 
 @pytest.mark.django_db
 def test_custom_validity_period(active_user_with_email_otp, settings):
+    # Save original validity period
     ORIGINAL_VALIDITY_PERIOD = settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
     ]
-    # Set to 2 seconds to ensure it's definitely expired after a 5 second sleep
+    # Set a very short validity period (2 seconds)
     settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = 2
 
+    # Part 1: Verify that an expired code fails
     mfa_method = active_user_with_email_otp.mfa_methods.first()
     client = TrenchAPIClient()
     response_first_step = client._first_factor_request(user=active_user_with_email_otp)
@@ -58,14 +60,23 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
     handler = get_mfa_handler(mfa_method=mfa_method)
     code = handler.create_code()
 
-    # Sleep for 5 seconds to ensure the code is definitely expired
+    # Sleep to ensure the code expires
     sleep(5)
 
+    # This should fail with expired code
     response_second_step = client._second_factor_request(
         code=code, ephemeral_token=ephemeral_token
     )
     assert response_second_step.status_code == HTTP_401_UNAUTHORIZED
 
+    # Part 2: Create a new authentication flow and verify it works with a fresh code
+    # Get a fresh first factor authentication
+    response_first_step = client._first_factor_request(user=active_user_with_email_otp)
+    ephemeral_token = client._extract_ephemeral_token_from_response(
+        response=response_first_step
+    )
+
+    # Use handler to get a fresh code at request time
     response_second_step = client._second_factor_request(
         handler=handler, ephemeral_token=ephemeral_token
     )
@@ -579,17 +590,27 @@ def test_backup_codes_regeneration_disabled_method(
     client = TrenchAPIClient()
     primary_method = active_user.mfa_methods.filter(is_primary=True).first()
     handler = get_mfa_handler(mfa_method=primary_method)
-    client.authenticate_multi_factor(mfa_method=primary_method, user=active_user)
 
+    # Ensure we have a fresh authentication before each important test step
+    auth_response = client.authenticate_multi_factor(mfa_method=primary_method, user=active_user)
+    assert auth_response.status_code == HTTP_200_OK, "Authentication failed"
+
+    # Disable the SMS method
     active_user.mfa_methods.filter(name="sms_twilio").update(is_active=False)
 
+    # Re-authenticate to ensure JWT is fresh before making request
+    auth_response = client.authenticate_multi_factor(mfa_method=primary_method, user=active_user)
+    assert auth_response.status_code == HTTP_200_OK, "Re-authentication failed"
+
+    # Generate a fresh code at the time of request
+    code = handler.create_code()
     response = client.post(
         path="/auth/sms_twilio/codes/regenerate/",
-        data={"code": handler.create_code()},
+        data={"code": code},
         format="json",
     )
-    assert response.status_code == HTTP_400_BAD_REQUEST
-    assert response.data.get("code")[0].code == "not_enabled"
+    assert response.status_code == HTTP_400_BAD_REQUEST, f"Got {response.status_code} instead of 400"
+    assert response.data.get("code")[0].code == "not_enabled", f"Got unexpected response data: {response.data}"
 
     # revert changes
     active_user.mfa_methods.filter(name="sms_twilio").update(is_active=True)
