@@ -86,8 +86,9 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
         ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
 
         # Try with fresh code - should succeed
+        # Use the handler parameter which will generate a fresh code at request time
         response_with_new_code = client._second_factor_request(
-            code=new_code, ephemeral_token=ephemeral_token
+            handler=handler, ephemeral_token=ephemeral_token
         )
         assert response_with_new_code.status_code == HTTP_200_OK, "Fresh code should work"
     finally:
