@@ -1,7 +1,7 @@
 name: "Lint and test"
 
 on:
-  push:
+  - pull_request
 
 jobs:
   test:
@@ -11,10 +11,54 @@ jobs:
       DJANGO_SETTINGS_MODULE: settings
       SECRET_KEY: this_is_no_secret_at_all
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-        django-version:
-          ["3.0.14", "3.1.14", "3.2.25", "4.0.10", "4.1.13", "4.2.16"]
+        include:
+          # Python 3.9 supports Django 3.2, 4.0, 4.1, 4.2
+          - python-version: "3.9"
+            django-version: "3.2.25"
+          - python-version: "3.9"
+            django-version: "4.0.10"
+          - python-version: "3.9"
+            django-version: "4.1.13"
+          - python-version: "3.9"
+            django-version: "4.2.16"
+          # Python 3.10 supports Django 3.2, 4.0, 4.1, 4.2, 5.0
+          - python-version: "3.10"
+            django-version: "3.2.25"
+          - python-version: "3.10"
+            django-version: "4.0.10"
+          - python-version: "3.10"
+            django-version: "4.1.13"
+          - python-version: "3.10"
+            django-version: "4.2.16"
+          - python-version: "3.10"
+            django-version: "5.0.10"
+          # Python 3.11 supports Django 4.1, 4.2, 5.0, 5.1
+          - python-version: "3.11"
+            django-version: "4.1.13"
+          - python-version: "3.11"
+            django-version: "4.2.16"
+          - python-version: "3.11"
+            django-version: "5.0.10"
+          - python-version: "3.11"
+            django-version: "5.1.10"
+          # Python 3.12 supports Django 4.2, 5.0, 5.1, 5.2
+          - python-version: "3.12"
+            django-version: "4.2.16"
+          - python-version: "3.12"
+            django-version: "5.0.10"
+          - python-version: "3.12"
+            django-version: "5.1.10"
+          - python-version: "3.12"
+            django-version: "5.2.10"
+          # Python 3.13 supports Django 5.0, 5.1, 5.2
+          - python-version: "3.13"
+            django-version: "5.0.10"
+          - python-version: "3.13"
+            django-version: "5.1.10"
+          - python-version: "3.13"
+            django-version: "5.2.10"
 
     steps:
       - uses: actions/checkout@v2

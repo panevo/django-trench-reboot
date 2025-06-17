@@ -2,6 +2,32 @@
 Changelog
 =========
 
+0.3.6 (2025-06-17)
+==================
+
+* Provide Django 5.x support
+* Provide Python 3.13 support
+
+
+0.3.5 (2025-01-20)
+==================
+
+* Fix issue with email 2FA activation
+
+
+0.3.4 (2025-01-17)
+==================
+
+* Update documentation
+* Support Django Rest Framework 3.15
+
+
+0.3.3 (2024-05-31)
+==================
+
+* Update details for PyPi
+
+
 0.3.2 (2024-05-29)
 ==================
 
