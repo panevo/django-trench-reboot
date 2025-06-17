@@ -46,7 +46,8 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
     ORIGINAL_VALIDITY_PERIOD = settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
     ]
-    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = 3
+    # Set to 2 seconds to ensure it's definitely expired after a 5 second sleep
+    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = 2
 
     mfa_method = active_user_with_email_otp.mfa_methods.first()
     client = TrenchAPIClient()
@@ -57,7 +58,8 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
     handler = get_mfa_handler(mfa_method=mfa_method)
     code = handler.create_code()
 
-    sleep(3)
+    # Sleep for 5 seconds to ensure the code is definitely expired
+    sleep(5)
 
     response_second_step = client._second_factor_request(
         code=code, ephemeral_token=ephemeral_token
