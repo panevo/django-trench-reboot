@@ -69,11 +69,16 @@ class TrenchAPIClient(APIClient):
     ) -> Response:
         if handler is None and code is None:
             raise ValueError("handler and code can't be None simultaneously")
+
+        # Always generate a fresh code when handler is provided
+        if code is None and handler is not None:
+            code = handler.create_code()
+
         return self.post(
             path=path,
             data={
                 "ephemeral_token": ephemeral_token,
-                "code": handler.create_code() if code is None else code,  # type: ignore
+                "code": code,
             },
             format="json",
         )
