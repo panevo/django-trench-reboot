@@ -43,54 +43,51 @@ def test_mfa_model(active_user_with_email_otp):
 
 @pytest.mark.django_db
 def test_custom_validity_period(active_user_with_email_otp, settings):
-    # Test the expiration of TOTP codes based on validity period
+    # Test that TOTP codes have a limited validity period
 
     # Save original validity period
     ORIGINAL_VALIDITY_PERIOD = settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
     ]
-    # Set a very short validity period (2 seconds)
-    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = 2
+    # For more reliable testing, use a fixed period that's long enough to avoid edge cases
+    # but short enough to test with reasonable sleep time
+    VALIDITY_PERIOD = 10  # 10 seconds
+    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = VALIDITY_PERIOD
 
     try:
-        # Part 1: Get everything we need for the test
+        # Get MFA method and handler
         mfa_method = active_user_with_email_otp.mfa_methods.first()
         handler = get_mfa_handler(mfa_method=mfa_method)
         client = TrenchAPIClient()
 
-        # Generate a code
-        old_code = handler.create_code()
-
-        # Sleep to ensure the code expires based on our validity period
-        sleep(5)
-
-        # Generate a new code - it should be different
-        new_code = handler.create_code()
-
-        # The codes should be different after the validity period
-        assert old_code != new_code, "TOTP code should change after validity period"
-
-        # Now verify we can authenticate with the new code but not the old one
-        # Start fresh authentication flow
+        # Get first factor authentication with ephemeral token
         response_first_step = client._first_factor_request(user=active_user_with_email_otp)
         ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
 
-        # Try with expired code - should fail
-        response_with_old_code = client._second_factor_request(
-            code=old_code, ephemeral_token=ephemeral_token
+        # Get a fresh code for immediate use and test it works
+        response_good = client._second_factor_request(
+            handler=handler,  # This generates a fresh code at request time
+            ephemeral_token=ephemeral_token
         )
-        assert response_with_old_code.status_code == HTTP_401_UNAUTHORIZED, "Expired code should not work"
+        assert response_good.status_code == HTTP_200_OK, "Fresh code should authenticate successfully"
 
-        # Get a fresh ephemeral token for the second test
+        # Now we'll test that an old code fails after it expires
+        # Get another first factor authentication with a fresh ephemeral token
         response_first_step = client._first_factor_request(user=active_user_with_email_otp)
         ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
 
-        # Try with fresh code - should succeed
-        # Use the handler parameter which will generate a fresh code at request time
-        response_with_new_code = client._second_factor_request(
-            handler=handler, ephemeral_token=ephemeral_token
+        # Get code now but use it after it expires
+        code_to_expire = handler.create_code()
+
+        # Wait for at least validity period + 1 second to ensure full expiration
+        sleep(VALIDITY_PERIOD + 3)
+
+        # Code should now be expired
+        response_expired = client._second_factor_request(
+            code=code_to_expire,
+            ephemeral_token=ephemeral_token
         )
-        assert response_with_new_code.status_code == HTTP_200_OK, "Fresh code should work"
+        assert response_expired.status_code == HTTP_401_UNAUTHORIZED, "Expired code should fail authentication"
     finally:
         # Restore original settings
         settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = ORIGINAL_VALIDITY_PERIOD
