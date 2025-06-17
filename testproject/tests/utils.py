@@ -40,8 +40,10 @@ class TrenchAPIClient(APIClient):
         response = self._first_factor_request(user=user, path=path)
         ephemeral_token = self._extract_ephemeral_token_from_response(response=response)
         handler = get_mfa_handler(mfa_method=mfa_method)
+        # Generate a fresh code for authentication
+        code = handler.create_code()
         response = self._second_factor_request(
-            handler=handler, ephemeral_token=ephemeral_token, path=path_2nd_factor
+            code=code, ephemeral_token=ephemeral_token, path=path_2nd_factor
         )
         self._update_jwt_from_response(response=response)
         return response
