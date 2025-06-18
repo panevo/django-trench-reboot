@@ -21,7 +21,7 @@ setup(
         "yubico-client>=1.13.0",
         "boto3>=1.21.37",
         "smsapi-client>=2.4.5",
-        "Django>=3.2.25",
+        "Django>=3.2.0",
         "djangorestframework>=3.10.0",
         "djangorestframework-simplejwt>=4.3.0",
     ],
