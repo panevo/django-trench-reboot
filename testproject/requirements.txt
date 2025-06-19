@@ -1,5 +1,5 @@
-boto3==1.21.38
-botocore==1.24.38
+boto3==1.38.38
+botocore==1.38.38
 Django
 djangorestframework==3.15.2
 django-environ==0.4.5

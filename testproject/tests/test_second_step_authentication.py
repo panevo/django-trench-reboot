@@ -43,31 +43,54 @@ def test_mfa_model(active_user_with_email_otp):
 
 @pytest.mark.django_db
 def test_custom_validity_period(active_user_with_email_otp, settings):
+    # Test that TOTP codes have a limited validity period
+
+    # Save original validity period
     ORIGINAL_VALIDITY_PERIOD = settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
     ]
-    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = 3
+    # For more reliable testing, use a fixed period that's long enough to avoid edge cases
+    # but short enough to test with reasonable sleep time
+    VALIDITY_PERIOD = 10  # 10 seconds
+    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = VALIDITY_PERIOD
 
-    mfa_method = active_user_with_email_otp.mfa_methods.first()
-    client = TrenchAPIClient()
-    response_first_step = client._first_factor_request(user=active_user_with_email_otp)
-    ephemeral_token = client._extract_ephemeral_token_from_response(
-        response=response_first_step
-    )
-    handler = get_mfa_handler(mfa_method=mfa_method)
-    code = handler.create_code()
+    try:
+        # Get MFA method and handler
+        mfa_method = active_user_with_email_otp.mfa_methods.first()
+        handler = get_mfa_handler(mfa_method=mfa_method)
+        client = TrenchAPIClient()
 
-    sleep(3)
+        # Get first factor authentication with ephemeral token
+        response_first_step = client._first_factor_request(user=active_user_with_email_otp)
+        ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
 
-    response_second_step = client._second_factor_request(
-        code=code, ephemeral_token=ephemeral_token
-    )
-    assert response_second_step.status_code == HTTP_401_UNAUTHORIZED
+        # Get a fresh code for immediate use and test it works
+        response_good = client._second_factor_request(
+            handler=handler,  # This generates a fresh code at request time
+            ephemeral_token=ephemeral_token
+        )
+        assert response_good.status_code == HTTP_200_OK, "Fresh code should authenticate successfully"
 
-    response_second_step = client._second_factor_request(
-        handler=handler, ephemeral_token=ephemeral_token
-    )
-    assert response_second_step.status_code == HTTP_200_OK
+        # Now we'll test that an old code fails after it expires
+        # Get another first factor authentication with a fresh ephemeral token
+        response_first_step = client._first_factor_request(user=active_user_with_email_otp)
+        ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
+
+        # Get code now but use it after it expires
+        code_to_expire = handler.create_code()
+
+        # Wait for at least validity period + 1 second to ensure full expiration
+        sleep(VALIDITY_PERIOD + 3)
+
+        # Code should now be expired
+        response_expired = client._second_factor_request(
+            code=code_to_expire,
+            ephemeral_token=ephemeral_token
+        )
+        assert response_expired.status_code == HTTP_401_UNAUTHORIZED, "Expired code should fail authentication"
+    finally:
+        # Restore original settings
+        settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = ORIGINAL_VALIDITY_PERIOD
 
     settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
@@ -575,22 +598,37 @@ def test_backup_codes_regeneration_disabled_method(
 ):
     active_user, _ = active_user_with_many_otp_methods
     client = TrenchAPIClient()
+
+    # Get the primary MFA method and create handler for code generation
     primary_method = active_user.mfa_methods.filter(is_primary=True).first()
     handler = get_mfa_handler(mfa_method=primary_method)
-    client.authenticate_multi_factor(mfa_method=primary_method, user=active_user)
 
-    active_user.mfa_methods.filter(name="sms_twilio").update(is_active=False)
+    try:
+        # 1. First get a valid authentication session
+        # Get a JWT token via full authentication
+        auth_response = client.authenticate_multi_factor(mfa_method=primary_method, user=active_user)
+        assert auth_response.status_code == HTTP_200_OK, "Initial authentication failed"
 
-    response = client.post(
-        path="/auth/sms_twilio/codes/regenerate/",
-        data={"code": handler.create_code()},
-        format="json",
-    )
-    assert response.status_code == HTTP_400_BAD_REQUEST
-    assert response.data.get("code")[0].code == "not_enabled"
+        # 2. Disable the SMS method we'll try to regenerate codes for
+        active_user.mfa_methods.filter(name="sms_twilio").update(is_active=False)
 
-    # revert changes
-    active_user.mfa_methods.filter(name="sms_twilio").update(is_active=True)
+        # 3. Generate a fresh code using our authenticated primary method
+        fresh_code = handler.create_code()
+
+        # 4. Now try to regenerate codes for the disabled SMS method
+        # This should fail with 400 Bad Request for an appropriate reason (not because of auth issues)
+        response = client.post(
+            path="/auth/sms_twilio/codes/regenerate/",
+            data={"code": fresh_code},
+            format="json",
+        )
+
+        # 5. This should be a 400 error with the specific 'not_enabled' code
+        assert response.status_code == HTTP_400_BAD_REQUEST, f"Expected 400, got {response.status_code}"
+        assert response.data.get("code")[0].code == "not_enabled", f"Expected 'not_enabled' error, got {response.data}"
+    finally:
+        # Clean up: restore the SMS method to active state
+        active_user.mfa_methods.filter(name="sms_twilio").update(is_active=True)
 
 
 @flaky
