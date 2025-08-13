@@ -5,7 +5,7 @@ Changelog
 0.3.7 (2025-08-13)
 ==================
 
-* #13 Speed up second-step MFA code validation by optimizing backup code check order 
+* Speed up second-step MFA code validation by optimizing backup code check order 
 
 
 0.3.6 (2025-06-17)
