@@ -81,22 +81,23 @@ class AbstractHOTPMessageDispatcher(ABC):
         return self.validate_code(code)
 
     def validate_code(self, code: str) -> bool:
-        """Validate HOTP code with counter synchronization."""
+        """Validate HOTP code only at current counter position."""
         hotp = self._get_hotp()
         
-        # Try current counter and a few ahead for synchronization
-        # HOTP RFC recommends checking a window of codes
-        for counter_offset in range(10):  # Check up to 10 codes ahead
-            test_counter = self._mfa_method.counter + counter_offset
-            if hotp.verify(code, test_counter):
-                # Update counter to the successful one + 1
-                self._mfa_method.counter = test_counter + 1
-                self._mfa_method.save(update_fields=['counter'])
-                return True
+        # Only validate code at the current counter position. This is aso known as 
+        # Strict HOTP validation or Synchronization-disabled HOTP validation.
+        # As per OWASP testing guide, the risk of an attacker successfully guessing a code is 
+        # significantly reduced if only the current code is considered valid.
+        # https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/11-Testing_Multi-Factor_Authentication
+        if hotp.verify(code, self._mfa_method.counter):
+            # Update counter for next use
+            self._mfa_method.counter += 1
+            self._mfa_method.save(update_fields=['counter'])
+            return True
         return False
 
     def _get_hotp(self) -> HOTP:
-        return create_hotp_command(secret=self._mfa_method.secret, counter=0)
+        return create_hotp_command(secret=self._mfa_method.secret)
 
     def _get_valid_window(self) -> int:
         return self._config.get(

@@ -3,7 +3,7 @@ from pyotp import HOTP
 
 class CreateHOTPCommand:
     @staticmethod
-    def execute(secret: str, counter: int) -> HOTP:
+    def execute(secret: str) -> HOTP:
         return HOTP(secret)
 
 

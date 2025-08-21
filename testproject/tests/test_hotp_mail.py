@@ -27,7 +27,7 @@ class HOTPSendMailMessageDispatcherTestCase(TestCase):
         )
         self.config = {
             "SOURCE_FIELD": "email",
-            "EMAIL_SUBJECT": "Your HOTP verification code",
+            "EMAIL_SUBJECT": "Your verification code",
             "EMAIL_PLAIN_TEMPLATE": "trench/backends/email/code.txt",
             "EMAIL_HTML_TEMPLATE": "trench/backends/email/code.html",
         }
@@ -49,26 +49,36 @@ class HOTPSendMailMessageDispatcherTestCase(TestCase):
         self.assertIsInstance(code, str)
         self.assertEqual(len(code), 6)  # Default HOTP code length
 
-    def test_hotp_code_validation_with_synchronization(self):
-        """Test HOTP code validation with counter synchronization."""
+    def test_hotp_code_validation_strict_counter(self):
+        """Test HOTP code validation only works at current counter position."""
         dispatcher = HOTPSendMailMessageDispatcher(
             mfa_method=self.mfa_method, config=self.config
         )
         
-        # Generate a code
-        code = dispatcher.create_code()
+        # Generate a code at current counter position
+        current_code = dispatcher.create_code()  # counter: 0 -> 1
         
-        # Reset counter to simulate out-of-sync scenario
-        self.mfa_method.counter = 0
+        # Generate another code to advance counter further
+        dispatcher.create_code()  # counter: 1 -> 2
+        
+        # Try to validate the old code - should fail since counter moved
+        is_valid = dispatcher.validate_code(current_code)
+        self.assertFalse(is_valid)
+        
+        # Generate a code at the current counter position
+        valid_code = dispatcher.create_code()  # counter: 2 -> 3
+        
+        # Reset counter to the position where valid_code was generated
+        self.mfa_method.counter = 2
         self.mfa_method.save()
         
-        # Validation should still work due to synchronization window
-        is_valid = dispatcher.validate_code(code)
+        # This should work since we're validating at the exact counter position
+        is_valid = dispatcher.validate_code(valid_code)
         self.assertTrue(is_valid)
         
-        # Counter should be updated to the correct position
+        # Counter should be incremented
         self.mfa_method.refresh_from_db()
-        self.assertEqual(self.mfa_method.counter, 2)  # 1 (code position) + 1
+        self.assertEqual(self.mfa_method.counter, 3)
 
     @patch('trench.backends.hotp_mail.send_mail')
     def test_dispatch_message_sends_email(self, mock_send_mail):
@@ -83,8 +93,7 @@ class HOTPSendMailMessageDispatcherTestCase(TestCase):
         
         # Check that send_mail was called
         self.assertTrue(mock_send_mail.called)
-        self.assertTrue(response.success)
-        self.assertIn("HOTP", str(response.details))
+        self.assertEqual(response.status_code, 200)
 
     def test_multiple_codes_are_different(self):
         """Test that consecutive HOTP codes are different."""

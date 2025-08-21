@@ -39,11 +39,11 @@ Add the HOTP email method to your Django settings:
 TRENCH_AUTH = {
     'MFA_METHODS': {
         'hotp_email': {
-            'VERBOSE_NAME': 'HOTP Email',
+            'VERBOSE_NAME': 'Email',
             'VALIDITY_PERIOD': 30,
             'HANDLER': 'trench.backends.hotp_mail.HOTPSendMailMessageDispatcher',
             'SOURCE_FIELD': 'email',
-            'EMAIL_SUBJECT': 'Your HOTP verification code',
+            'EMAIL_SUBJECT': 'Your verification code',
             'EMAIL_PLAIN_TEMPLATE': 'trench/backends/email/code.txt',
             'EMAIL_HTML_TEMPLATE': 'trench/backends/email/code.html',
         },
