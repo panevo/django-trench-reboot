@@ -103,6 +103,15 @@ DEFAULTS = {
             EMAIL_PLAIN_TEMPLATE: "trench/backends/email/code.txt",
             EMAIL_HTML_TEMPLATE: "trench/backends/email/code.html",
         },
+        "hotp_email": {
+            VERBOSE_NAME: _("hotp_email"),
+            VALIDITY_PERIOD: 30,
+            HANDLER: "trench.backends.hotp_mail.HOTPSendMailMessageDispatcher",
+            SOURCE_FIELD: "email",
+            EMAIL_SUBJECT: _("Your HOTP verification code"),
+            EMAIL_PLAIN_TEMPLATE: "trench/backends/email/code.txt",
+            EMAIL_HTML_TEMPLATE: "trench/backends/email/code.html",
+        },
         "app": {
             VERBOSE_NAME: _("app"),
             VALIDITY_PERIOD: 30,

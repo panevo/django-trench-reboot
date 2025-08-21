@@ -5,6 +5,7 @@ from django.db.models import (
     CharField,
     CheckConstraint,
     ForeignKey,
+    IntegerField,
     Manager,
     Model,
     Q,
@@ -73,6 +74,7 @@ class MFAMethod(Model):
     is_primary = BooleanField(_("is primary"), default=False)
     is_active = BooleanField(_("is active"), default=False)
     _backup_codes = TextField(_("backup codes"), blank=True)
+    counter = IntegerField(_("counter"), default=0)
 
     class Meta:
         verbose_name = _("MFA Method")
