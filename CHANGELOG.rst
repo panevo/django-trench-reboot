@@ -2,6 +2,43 @@
 Changelog
 =========
 
+0.3.8 (unreleased)
+==================
+
+**Security Enhancement: Single-Use Email MFA Codes**
+
+* **BREAKING CHANGE**: Email MFA now uses single-use random codes instead of TOTP
+* New ``EmailMessageDispatcher`` backend that generates cryptographically secure random codes
+* Codes are stored in database with expiration timestamps
+* Each code can only be used once and new codes invalidate previous unused codes
+* Default validity period for email codes increased to 300 seconds (5 minutes)
+* Added ``OneTimeCode`` model to store email verification codes
+* Added ``cleanup_otp_codes`` management command to clean up old codes
+* Legacy TOTP-based email backend still available as ``SendMailMessageDispatcher``
+* Migration required: Run ``python manage.py migrate`` after upgrading
+
+**Migration Notes:**
+
+If you're upgrading from a previous version:
+
+1. Run migrations: ``python manage.py migrate``
+2. Update your ``TRENCH_AUTH`` settings to use the new handler:
+   
+   .. code-block:: python
+   
+       "email": {
+           "HANDLER": "trench.backends.email.EmailMessageDispatcher",
+           "VALIDITY_PERIOD": 300,  # 5 minutes recommended
+           # ... other settings
+       }
+
+3. Set up periodic cleanup of old codes (optional but recommended):
+   
+   .. code-block:: bash
+   
+       python manage.py cleanup_otp_codes --days 7
+
+
 0.3.7 (2025-08-13)
 ==================
 

@@ -24,8 +24,8 @@ Defaults and customization
         "MFA_METHODS": {
             "email": {
                 "VERBOSE_NAME": _("email"),
-                "VALIDITY_PERIOD": 60 * 10,
-                "HANDLER": "trench.backends.basic_mail.SendMailMessageDispatcher",
+                "VALIDITY_PERIOD": 300,  # 5 minutes for email codes
+                "HANDLER": "trench.backends.email.EmailMessageDispatcher",
                 "SOURCE_FIELD": "email",
                 "EMAIL_SUBJECT": _("Your verification code"),
                 "EMAIL_PLAIN_TEMPLATE": "trench/backends/email/code.txt",
@@ -115,7 +115,7 @@ Method item properties
       - Full name of the method.
       - ``str``
     * - ``VALIDITY_PERIOD``
-      - OTP code validity (in seconds).
+      - OTP code validity (in seconds). For email-based MFA using the ``EmailMessageDispatcher``, this controls how long before the code expires. For TOTP-based methods (authenticator apps, SMS), this is the time window for code generation.
       - ``int``
     * - ``HANDLER``
       - String path pointing to the location of your backend class definition.

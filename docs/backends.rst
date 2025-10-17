@@ -10,8 +10,20 @@ Built-in backends
 E-mail
 *****
 
-This basic method uses built-in Django email backend.
-Check out the `Django's documentation`_ on this topic.
+This method uses built-in Django email backend to send single-use verification codes.
+Unlike other MFA methods that use TOTP (Time-based One-Time Password), the email backend
+generates cryptographically secure random codes that are stored in the database with an
+expiration timestamp.
+
+**Key Features:**
+
+* Generates unique random 6-digit codes for each request
+* Codes are single-use and automatically invalidated after validation
+* Each new code request invalidates any previous unused codes
+* Codes expire after the configured validity period (default: 5 minutes)
+* Secure: uses Python's ``secrets`` module for cryptographic randomness
+
+Check out the `Django's documentation`_ on email configuration.
 
 .. code-block:: python
 
@@ -20,8 +32,8 @@ Check out the `Django's documentation`_ on this topic.
         'MFA_METHODS': {
             'email': {
                 'VERBOSE_NAME': 'email',
-                'VALIDITY_PERIOD': 60 * 10,
-                'HANDLER': 'trench.backends.basic_mail.SendMailBackend',
+                'VALIDITY_PERIOD': 300,  # 5 minutes in seconds
+                'HANDLER': 'trench.backends.email.EmailMessageDispatcher',
                 'SOURCE_FIELD': 'email',
                 'EMAIL_SUBJECT': 'Your verification code',
                 'EMAIL_PLAIN_TEMPLATE': 'trench/backends/email/code.txt',
@@ -34,7 +46,27 @@ Check out the `Django's documentation`_ on this topic.
 ``EMAIL_PLAIN_TEMPLATE`` and ``EMAIL_HTML_TEMPLATE`` are paths to templates
 that are used to render email content.
 
-These templates receive ``code`` variable in the context, which is the generated OTP code.
+These templates receive ``code`` variable in the context, which is the generated verification code.
+
+**Database Cleanup**
+
+The email backend stores codes in the database. To clean up old expired codes, you can run the
+provided management command periodically (e.g., via cron or scheduled task):
+
+.. code-block:: bash
+
+    python manage.py cleanup_otp_codes --days 7
+
+This will delete all codes older than 7 days. You can adjust the retention period as needed.
+
+**Legacy Email Backend**
+
+If you need the old TOTP-based email behavior (not recommended for security reasons), you can
+still use the legacy backend:
+
+.. code-block:: python
+
+    'HANDLER': 'trench.backends.basic_mail.SendMailMessageDispatcher',
 
 Text / SMS
 **********
