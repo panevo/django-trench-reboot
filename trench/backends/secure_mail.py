@@ -30,12 +30,12 @@ DEFAULT_TOKEN_VALIDITY = 600
 class SecureMailMessageDispatcher(AbstractMessageDispatcher):
     """
     Secure email MFA backend that generates single-use random codes.
-    
+
     Unlike the basic email backend which uses TOTP codes that are valid for
     multiple uses within a time window, this backend generates a cryptographically
     secure random code for each request. The code is hashed before storage and
     can only be used once.
-    
+
     Features:
     - Generates random 6-digit codes using secrets module (cryptographically secure)
     - Hashes codes using SHA-256 before storing in database
@@ -53,22 +53,22 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
     def dispatch_message(self) -> DispatchResponse:
         """
         Generate a new single-use code, hash it, store it, and send via email.
-        
+
         Each call to this method generates a new code and invalidates any
         previously issued code for this MFA method.
         """
         # Generate a cryptographically secure random code
         code = self._generate_code()
-        
+
         # Hash the code before storing
         code_hash = self._hash_code(code)
-        
+
         # Calculate expiration time
         validity_seconds = self._config.get(
             'TOKEN_VALIDITY', DEFAULT_TOKEN_VALIDITY
         )
         expires_at = timezone.now() + timedelta(seconds=validity_seconds)
-        
+
         # Store the hashed code with expiration and reset failure counter
         # Use select_for_update to prevent race conditions
         try:
@@ -131,10 +131,10 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
     def _generate_code(self) -> str:
         """
         Generate a cryptographically secure random numeric code.
-        
+
         Uses the secrets module which is appropriate for security-sensitive
         applications.
-        
+
         Returns:
             A string of TOKEN_LENGTH digits
         """
@@ -142,17 +142,17 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
         # For TOKEN_LENGTH=6, this is [0, 1000000), giving codes 000000-999999
         max_value = 10 ** self._TOKEN_LENGTH
         code_int = secrets.randbelow(max_value)
-        
+
         # Format with leading zeros
         return str(code_int).zfill(self._TOKEN_LENGTH)
 
     def _hash_code(self, code: str) -> str:
         """
         Hash a code using SHA-256.
-        
+
         Args:
             code: The plaintext code to hash
-            
+
         Returns:
             The SHA-256 hash as a hexadecimal string (64 characters)
         """
@@ -161,7 +161,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
     def validate_code(self, code: str) -> bool:
         """
         Validate a code against the stored hashed token.
-        
+
         This method:
         1. Checks if a token exists
         2. Checks if the token has expired
@@ -169,10 +169,10 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
         4. Validates the code against the stored hash
         5. On success: clears the token (single-use)
         6. On failure: increments failure counter
-        
+
         Args:
             code: The plaintext code to validate
-            
+
         Returns:
             True if the code is valid, False otherwise
         """
@@ -181,7 +181,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
             mfa_method = self._mfa_method.__class__.objects.select_for_update().get(
                 pk=self._mfa_method.pk
             )
-            
+
             # Check if token exists
             if not mfa_method.token_hash:
                 logging.warning(
@@ -190,7 +190,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                     mfa_method.user_id,
                 )
                 return False
-            
+
             # Check if token has expired
             if mfa_method.token_expires_at and timezone.now() > mfa_method.token_expires_at:
                 logging.warning(
@@ -204,7 +204,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.token_failures = 0
                 mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
                 return False
-            
+
             # Check if too many failures
             if mfa_method.token_failures >= MAX_TOKEN_FAILURES:
                 logging.warning(
@@ -218,10 +218,10 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.token_failures = 0
                 mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
                 return False
-            
+
             # Hash the provided code and compare
             code_hash = self._hash_code(code)
-            
+
             if code_hash == mfa_method.token_hash:
                 # Success! Clear the token (single-use)
                 logging.info(
@@ -250,7 +250,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
     def create_code(self) -> str:
         """
         Override base class method to ensure we don't use TOTP.
-        
+
         This method should not be called for this backend - we generate
         codes in dispatch_message(). However, if it is called, we'll
         raise an error to make it clear this backend doesn't work that way.

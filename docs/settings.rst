@@ -100,6 +100,26 @@ Properties
       - ``dict``
       - Described in `backends`_ section.
 
+Backend-Specific Properties
+****************************
+
+Secure Email Backend
+--------------------
+
+The ``secure_email`` backend supports an additional configuration option:
+
+.. list-table::
+    :header-rows: 1
+
+    * - Property
+      - Description
+      - Type
+      - Default value
+    * - ``TOKEN_VALIDITY``
+      - Time in seconds before the single-use code expires. After this time, the code will be rejected even if it hasn't been used.
+      - ``int``
+      - ``600`` (10 minutes)
+
 Method item properties
 **********************
 

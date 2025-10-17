@@ -25,7 +25,7 @@ class MFAMethodAdmin(admin.ModelAdmin):
         'token_expires_at',
         'token_failures',
     ]
-    
+
     fieldsets = (
         (None, {
             'fields': ('user', 'name', 'is_primary', 'is_active')
@@ -45,7 +45,7 @@ class MFAMethodAdmin(admin.ModelAdmin):
             ),
         }),
     )
-    
+
     @admin.display(description=_('Token Status'))
     def token_status(self, obj):
         """Display the status of the single-use token."""
@@ -54,7 +54,7 @@ class MFAMethodAdmin(admin.ModelAdmin):
                 '<span style="color: gray;">{}</span>',
                 _('No token')
             )
-        
+
         if obj.token_expires_at:
             if timezone.now() > obj.token_expires_at:
                 return format_html(
@@ -69,12 +69,12 @@ class MFAMethodAdmin(admin.ModelAdmin):
                     _('Valid'),
                     minutes
                 )
-        
+
         return format_html(
             '<span style="color: orange;">{}</span>',
             _('No expiry set')
         )
-    
+
     @admin.display(description=_('Token Failures'))
     def token_failure_count(self, obj):
         """Display the number of failed token validation attempts."""
@@ -93,7 +93,7 @@ class MFAMethodAdmin(admin.ModelAdmin):
                 '<span style="color: orange;">{}</span>',
                 obj.token_failures
             )
-    
+
     @admin.display(description=_('Token Hash'))
     def token_hash_display(self, obj):
         """Display truncated token hash (not the actual token)."""
