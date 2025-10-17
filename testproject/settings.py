@@ -169,6 +169,15 @@ TRENCH_AUTH = {
             "EMAIL_PLAIN_TEMPLATE": "trench/backends/email/code.txt",
             "EMAIL_HTML_TEMPLATE": "trench/backends/email/code.html",
         },
+        "secure_email": {
+            "VERBOSE_NAME": "secure_email",
+            "HANDLER": "trench.backends.secure_mail.SecureMailMessageDispatcher",
+            "SOURCE_FIELD": "email",
+            "EMAIL_SUBJECT": "Your verification code",
+            "EMAIL_PLAIN_TEMPLATE": "trench/backends/email/code.txt",
+            "EMAIL_HTML_TEMPLATE": "trench/backends/email/code.html",
+            "TOKEN_VALIDITY": 600,  # 10 minutes in seconds
+        },
         "app": {
             "VERBOSE_NAME": "app",
             "VALIDITY_PERIOD": 30,
