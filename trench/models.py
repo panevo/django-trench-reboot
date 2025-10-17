@@ -4,6 +4,7 @@ from django.db.models import (
     BooleanField,
     CharField,
     CheckConstraint,
+    DateTimeField,
     ForeignKey,
     Manager,
     Model,
@@ -12,6 +13,7 @@ from django.db.models import (
     TextField,
     UniqueConstraint,
 )
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from typing import Any, Iterable
@@ -105,3 +107,64 @@ class MFAMethod(Model):
     @backup_codes.setter
     def backup_codes(self, codes: Iterable) -> None:
         self._backup_codes = self._BACKUP_CODES_DELIMITER.join(codes)
+
+
+class OneTimeCodeManager(Manager):
+    def create_code(self, mfa_method: MFAMethod, code: str, validity_period: int) -> "OneTimeCode":
+        """Create a new one-time code with expiry."""
+        # Invalidate any existing codes for this method
+        self.filter(mfa_method=mfa_method, is_used=False).update(is_used=True)
+        
+        expires_at = timezone.now() + timezone.timedelta(seconds=validity_period)
+        return self.create(
+            mfa_method=mfa_method,
+            code=code,
+            expires_at=expires_at,
+        )
+    
+    def validate_and_use(self, mfa_method: MFAMethod, code: str) -> bool:
+        """Validate a code and mark it as used if valid."""
+        try:
+            otc = self.get(
+                mfa_method=mfa_method,
+                code=code,
+                is_used=False,
+                expires_at__gt=timezone.now(),
+            )
+            otc.is_used = True
+            otc.save(update_fields=["is_used"])
+            return True
+        except self.model.DoesNotExist:
+            return False
+
+
+class OneTimeCode(Model):
+    """Model to store single-use verification codes for email MFA."""
+    
+    mfa_method = ForeignKey(
+        MFAMethod,
+        on_delete=CASCADE,
+        verbose_name=_("MFA method"),
+        related_name="one_time_codes",
+    )
+    code = CharField(_("code"), max_length=255)
+    created_at = DateTimeField(_("created at"), auto_now_add=True)
+    expires_at = DateTimeField(_("expires at"))
+    is_used = BooleanField(_("is used"), default=False)
+    
+    objects = OneTimeCodeManager()
+    
+    class Meta:
+        verbose_name = _("One-Time Code")
+        verbose_name_plural = _("One-Time Codes")
+        indexes = [
+            # Index for quick lookups during validation
+            # Note: Django will automatically create indexes for foreign keys
+        ]
+    
+    def __str__(self) -> str:
+        return f"Code for {self.mfa_method} (expires: {self.expires_at})"
+    
+    def is_valid(self) -> bool:
+        """Check if the code is still valid."""
+        return not self.is_used and self.expires_at > timezone.now()

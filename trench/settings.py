@@ -96,8 +96,8 @@ DEFAULTS = {
         },
         "email": {
             VERBOSE_NAME: _("email"),
-            VALIDITY_PERIOD: 30,
-            HANDLER: "trench.backends.basic_mail.SendMailMessageDispatcher",
+            VALIDITY_PERIOD: 300,  # 5 minutes for email codes
+            HANDLER: "trench.backends.email.EmailMessageDispatcher",
             SOURCE_FIELD: "email",
             EMAIL_SUBJECT: _("Your verification code"),
             EMAIL_PLAIN_TEMPLATE: "trench/backends/email/code.txt",
