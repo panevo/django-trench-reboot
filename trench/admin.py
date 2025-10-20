@@ -32,7 +32,8 @@ class MFAMethodAdmin(admin.ModelAdmin):
             {
                 "fields": ("token_expires_at", "token_failures"),
                 "description": _(
-                    "Used for secure email MFA. Token hash is never displayed for security."
+                    "Used for secure email MFA. Token hash is never "
+                    "displayed for security."
                 ),
             },
         ),
