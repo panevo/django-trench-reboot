@@ -6,38 +6,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trench', '0006_alter_mfamethod_id'),
+        ("trench", "0006_alter_mfamethod_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mfamethod',
-            name='token_hash',
+            model_name="mfamethod",
+            name="token_hash",
             field=models.CharField(
                 max_length=64,
                 blank=True,
                 null=True,
-                verbose_name='token hash',
-                help_text='SHA-256 hash of the single-use verification token'
+                verbose_name="token hash",
+                help_text="SHA-256 hash of the single-use verification token",
             ),
         ),
         migrations.AddField(
-            model_name='mfamethod',
-            name='token_expires_at',
+            model_name="mfamethod",
+            name="token_expires_at",
             field=models.DateTimeField(
                 blank=True,
                 null=True,
-                verbose_name='token expires at',
-                help_text='Expiration timestamp for the single-use token'
+                verbose_name="token expires at",
+                help_text="Expiration timestamp for the single-use token",
             ),
         ),
         migrations.AddField(
-            model_name='mfamethod',
-            name='token_failures',
+            model_name="mfamethod",
+            name="token_failures",
             field=models.IntegerField(
                 default=0,
-                verbose_name='token failures',
-                help_text='Number of failed validation attempts for the current token'
+                verbose_name="token failures",
+                help_text="Number of failed validation attempts for the current token",
             ),
         ),
     ]

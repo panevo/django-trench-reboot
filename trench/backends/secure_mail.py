@@ -64,9 +64,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
         code_hash = self._hash_code(code)
 
         # Calculate expiration time
-        validity_seconds = self._config.get(
-            'TOKEN_VALIDITY', DEFAULT_TOKEN_VALIDITY
-        )
+        validity_seconds = self._config.get("TOKEN_VALIDITY", DEFAULT_TOKEN_VALIDITY)
         expires_at = timezone.now() + timedelta(seconds=validity_seconds)
 
         # Store the hashed code with expiration and reset failure counter
@@ -79,13 +77,15 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.token_hash = code_hash
                 mfa_method.token_expires_at = expires_at
                 mfa_method.token_failures = 0
-                mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
+                mfa_method.save(
+                    update_fields=["token_hash", "token_expires_at", "token_failures"]
+                )
         except Exception as cause:  # pragma: nocover
             logging.error(
                 "Failed to store token for MFA method %s: %s",
                 self._mfa_method.name,
                 cause,
-                exc_info=True
+                exc_info=True,
             )  # pragma: nocover
             return FailedDispatchResponse(
                 details=_("Failed to generate verification code")
@@ -113,10 +113,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
             return SuccessfulDispatchResponse(details=self._SUCCESS_DETAILS)
         except SMTPException as cause:  # pragma: nocover
             logging.error(
-                "SMTP error sending code to %s: %s",
-                self._to,
-                cause,
-                exc_info=True
+                "SMTP error sending code to %s: %s", self._to, cause, exc_info=True
             )  # pragma: nocover
             return FailedDispatchResponse(details=str(cause))  # pragma: nocover
         except ConnectionRefusedError as cause:  # pragma: nocover
@@ -124,7 +121,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 "Connection refused sending code to %s: %s",
                 self._to,
                 cause,
-                exc_info=True
+                exc_info=True,
             )  # pragma: nocover
             return FailedDispatchResponse(details=str(cause))  # pragma: nocover
 
@@ -140,7 +137,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
         """
         # Generate random integer in range [0, 10^TOKEN_LENGTH)
         # For TOKEN_LENGTH=6, this is [0, 1000000), giving codes 000000-999999
-        max_value = 10 ** self._TOKEN_LENGTH
+        max_value = 10**self._TOKEN_LENGTH
         code_int = secrets.randbelow(max_value)
 
         # Format with leading zeros
@@ -165,7 +162,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
 
         # Combine salt and code before hashing
         salted_code = f"{salt}{code}"
-        return hashlib.sha256(salted_code.encode('utf-8')).hexdigest()
+        return hashlib.sha256(salted_code.encode("utf-8")).hexdigest()
 
     def validate_code(self, code: str) -> bool:
         """
@@ -201,7 +198,10 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 return False
 
             # Check if token has expired
-            if mfa_method.token_expires_at and timezone.now() > mfa_method.token_expires_at:
+            if (
+                mfa_method.token_expires_at
+                and timezone.now() > mfa_method.token_expires_at
+            ):
                 logging.warning(
                     "Validation attempted with expired token for MFA method %s (user_id=%s)",
                     mfa_method.name,
@@ -211,7 +211,9 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.token_hash = None
                 mfa_method.token_expires_at = None
                 mfa_method.token_failures = 0
-                mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
+                mfa_method.save(
+                    update_fields=["token_hash", "token_expires_at", "token_failures"]
+                )
                 return False
 
             # Check if too many failures
@@ -225,7 +227,9 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.token_hash = None
                 mfa_method.token_expires_at = None
                 mfa_method.token_failures = 0
-                mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
+                mfa_method.save(
+                    update_fields=["token_hash", "token_expires_at", "token_failures"]
+                )
                 return False
 
             # Hash the provided code with the same salt used during generation
@@ -241,12 +245,14 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.token_hash = None
                 mfa_method.token_expires_at = None
                 mfa_method.token_failures = 0
-                mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
+                mfa_method.save(
+                    update_fields=["token_hash", "token_expires_at", "token_failures"]
+                )
                 return True
             else:
                 # Failed validation, increment counter
                 mfa_method.token_failures += 1
-                mfa_method.save(update_fields=['token_failures'])
+                mfa_method.save(update_fields=["token_failures"])
                 logging.warning(
                     "Failed validation attempt %d/%d for MFA method %s (user_id=%s)",
                     mfa_method.token_failures,

@@ -61,20 +61,30 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
         client = TrenchAPIClient()
 
         # Get first factor authentication with ephemeral token
-        response_first_step = client._first_factor_request(user=active_user_with_email_otp)
-        ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
+        response_first_step = client._first_factor_request(
+            user=active_user_with_email_otp
+        )
+        ephemeral_token = client._extract_ephemeral_token_from_response(
+            response=response_first_step
+        )
 
         # Get a fresh code for immediate use and test it works
         response_good = client._second_factor_request(
             handler=handler,  # This generates a fresh code at request time
-            ephemeral_token=ephemeral_token
+            ephemeral_token=ephemeral_token,
         )
-        assert response_good.status_code == HTTP_200_OK, "Fresh code should authenticate successfully"
+        assert (
+            response_good.status_code == HTTP_200_OK
+        ), "Fresh code should authenticate successfully"
 
         # Now we'll test that an old code fails after it expires
         # Get another first factor authentication with a fresh ephemeral token
-        response_first_step = client._first_factor_request(user=active_user_with_email_otp)
-        ephemeral_token = client._extract_ephemeral_token_from_response(response=response_first_step)
+        response_first_step = client._first_factor_request(
+            user=active_user_with_email_otp
+        )
+        ephemeral_token = client._extract_ephemeral_token_from_response(
+            response=response_first_step
+        )
 
         # Get code now but use it after it expires
         code_to_expire = handler.create_code()
@@ -84,13 +94,16 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
 
         # Code should now be expired
         response_expired = client._second_factor_request(
-            code=code_to_expire,
-            ephemeral_token=ephemeral_token
+            code=code_to_expire, ephemeral_token=ephemeral_token
         )
-        assert response_expired.status_code == HTTP_401_UNAUTHORIZED, "Expired code should fail authentication"
+        assert (
+            response_expired.status_code == HTTP_401_UNAUTHORIZED
+        ), "Expired code should fail authentication"
     finally:
         # Restore original settings
-        settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = ORIGINAL_VALIDITY_PERIOD
+        settings.TRENCH_AUTH["MFA_METHODS"]["email"][
+            "VALIDITY_PERIOD"
+        ] = ORIGINAL_VALIDITY_PERIOD
 
     settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
@@ -606,7 +619,9 @@ def test_backup_codes_regeneration_disabled_method(
     try:
         # 1. First get a valid authentication session
         # Get a JWT token via full authentication
-        auth_response = client.authenticate_multi_factor(mfa_method=primary_method, user=active_user)
+        auth_response = client.authenticate_multi_factor(
+            mfa_method=primary_method, user=active_user
+        )
         assert auth_response.status_code == HTTP_200_OK, "Initial authentication failed"
 
         # 2. Disable the SMS method we'll try to regenerate codes for
@@ -624,8 +639,12 @@ def test_backup_codes_regeneration_disabled_method(
         )
 
         # 5. This should be a 400 error with the specific 'not_enabled' code
-        assert response.status_code == HTTP_400_BAD_REQUEST, f"Expected 400, got {response.status_code}"
-        assert response.data.get("code")[0].code == "not_enabled", f"Expected 'not_enabled' error, got {response.data}"
+        assert (
+            response.status_code == HTTP_400_BAD_REQUEST
+        ), f"Expected 400, got {response.status_code}"
+        assert (
+            response.data.get("code")[0].code == "not_enabled"
+        ), f"Expected 'not_enabled' error, got {response.data}"
     finally:
         # Clean up: restore the SMS method to active state
         active_user.mfa_methods.filter(name="sms_twilio").update(is_active=True)
