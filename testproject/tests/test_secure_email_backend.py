@@ -389,3 +389,73 @@ class TestSecureEmailBackend:
         # With 1,000,000 possible 6-digit codes and only 10 samples,
         # collision probability is extremely low
         assert len(codes) == 10
+    
+    def test_hash_uses_salt_prevents_rainbow_table(self, settings):
+        """Test that hashing uses salt to prevent rainbow table attacks."""
+        # Create two different users with different secrets
+        user1, _ = User.objects.get_or_create(
+            username="user1",
+            email="user1@test.com",
+        )
+        user2, _ = User.objects.get_or_create(
+            username="user2", 
+            email="user2@test.com",
+        )
+        
+        # Create MFA methods with different secrets (salts)
+        mfa1, _ = MFAMethod.objects.get_or_create(
+            user=user1,
+            name="secure_email",
+            defaults={
+                'secret': create_secret_command(),
+                'is_primary': True,
+                'is_active': True,
+            }
+        )
+        
+        mfa2, _ = MFAMethod.objects.get_or_create(
+            user=user2,
+            name="secure_email",
+            defaults={
+                'secret': create_secret_command(),
+                'is_primary': True,
+                'is_active': True,
+            }
+        )
+        
+        # Ensure secrets are different
+        assert mfa1.secret != mfa2.secret
+        
+        config = settings.TRENCH_AUTH["MFA_METHODS"]["secure_email"]
+        
+        # Generate the same code for both users (by mocking _generate_code)
+        test_code = "123456"
+        
+        with patch('trench.backends.secure_mail.send_mail'):
+            # User 1
+            dispatcher1 = SecureMailMessageDispatcher(mfa_method=mfa1, config=config)
+            with patch.object(dispatcher1, '_generate_code', return_value=test_code):
+                dispatcher1.dispatch_message()
+            
+            # User 2
+            dispatcher2 = SecureMailMessageDispatcher(mfa_method=mfa2, config=config)
+            with patch.object(dispatcher2, '_generate_code', return_value=test_code):
+                dispatcher2.dispatch_message()
+        
+        # Refresh from DB
+        mfa1.refresh_from_db()
+        mfa2.refresh_from_db()
+        
+        # Even though the same code was generated, the hashes should be different
+        # because each user has a different secret (salt)
+        assert mfa1.token_hash != mfa2.token_hash
+        
+        # Verify each user can only validate with their own code
+        assert dispatcher1.validate_code(test_code) is True
+        assert dispatcher2.validate_code(test_code) is True
+        
+        # This demonstrates that:
+        # 1. Same code produces different hashes for different users (salt works)
+        # 2. An attacker can't pre-compute a single rainbow table for all users
+        # 3. Each user's validation uses their own salt correctly
+

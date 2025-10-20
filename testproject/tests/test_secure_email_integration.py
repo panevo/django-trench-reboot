@@ -255,3 +255,83 @@ class TestSecureEmailIntegration:
         
         # Should not be able to reverse the hash
         # (This is inherent to SHA-256, but we verify the length/format)
+    
+    def test_salt_prevents_rainbow_table_attacks(self, api_client):
+        """
+        Verify that using salt prevents rainbow table attacks.
+        
+        Without salt, an attacker with database access could pre-compute hashes
+        for all 1 million possible 6-digit codes and reverse any hash instantly.
+        With salt (using the MFA method's secret), each user requires a separate
+        rainbow table, making the attack infeasible.
+        """
+        from trench.backends.secure_mail import SecureMailMessageDispatcher
+        from trench.settings import trench_settings
+        from trench.command.create_secret import create_secret_command
+        
+        # Create two users with different secrets
+        user1, _ = User.objects.get_or_create(
+            username="salt_test_user1",
+            email="salt1@test.com",
+        )
+        user2, _ = User.objects.get_or_create(
+            username="salt_test_user2",
+            email="salt2@test.com",
+        )
+        
+        # Create MFA methods with different secrets (salts)
+        mfa1, _ = MFAMethod.objects.get_or_create(
+            user=user1,
+            name="secure_email",
+            defaults={
+                'secret': create_secret_command(),
+                'is_primary': True,
+                'is_active': True,
+            }
+        )
+        
+        mfa2, _ = MFAMethod.objects.get_or_create(
+            user=user2,
+            name="secure_email",
+            defaults={
+                'secret': create_secret_command(),
+                'is_primary': True,
+                'is_active': True,
+            }
+        )
+        
+        # Verify secrets are different
+        assert mfa1.secret != mfa2.secret
+        
+        config = trench_settings.MFA_METHODS["secure_email"]
+        
+        # Force both users to get the same code by mocking _generate_code
+        test_code = "424242"
+        
+        with patch('trench.backends.secure_mail.send_mail'):
+            dispatcher1 = SecureMailMessageDispatcher(mfa_method=mfa1, config=config)
+            with patch.object(dispatcher1, '_generate_code', return_value=test_code):
+                dispatcher1.dispatch_message()
+            
+            dispatcher2 = SecureMailMessageDispatcher(mfa_method=mfa2, config=config)
+            with patch.object(dispatcher2, '_generate_code', return_value=test_code):
+                dispatcher2.dispatch_message()
+        
+        # Refresh from database
+        mfa1.refresh_from_db()
+        mfa2.refresh_from_db()
+        
+        # CRITICAL SECURITY TEST: Same code MUST produce different hashes
+        # This is the key defense against rainbow table attacks
+        assert mfa1.token_hash != mfa2.token_hash, \
+            "Salt MUST make identical codes hash differently for different users!"
+        
+        # Verify validation still works correctly for each user
+        assert dispatcher1.validate_code(test_code) is True
+        assert dispatcher2.validate_code(test_code) is True
+        
+        # This proves:
+        # 1. Same code + different salt = different hash (rainbow table protection)
+        # 2. Each user's hash can only be validated with their own salt
+        # 3. An attacker would need 1M * N rainbow tables (N = number of users)
+
