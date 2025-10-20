@@ -21,7 +21,6 @@ class MFAMethodAdmin(admin.ModelAdmin):
     readonly_fields = [
         'secret',
         '_backup_codes',
-        'token_hash_display',
         'token_expires_at',
         'token_failures',
     ]
@@ -38,10 +37,9 @@ class MFAMethodAdmin(admin.ModelAdmin):
             'fields': ('_backup_codes',),
         }),
         (_('Single-Use Token (Secure Email)'), {
-            'fields': ('token_hash_display', 'token_expires_at', 'token_failures'),
+            'fields': ( 'token_expires_at', 'token_failures'),
             'description': _(
-                'Used for secure email MFA. Token hash is shown for debugging purposes only. '
-                'The actual token cannot be recovered from the hash.'
+                'Used for secure email MFA.'
             ),
         }),
     )
