@@ -19,29 +19,14 @@ class MFAMethodAdmin(admin.ModelAdmin):
     list_filter = ["is_primary", "is_active", "name"]
     search_fields = ["user__username", "user__email", "name"]
     readonly_fields = [
-        "secret",
-        "_backup_codes",
         "token_expires_at",
         "token_failures",
     ]
     # Exclude sensitive fields from admin to prevent security issues
-    exclude = ["token_hash"]
+    exclude = ["token_hash", "secret", "_backup_codes"]
 
     fieldsets = (
         (None, {"fields": ("user", "name", "is_primary", "is_active")}),
-        (
-            _("TOTP Configuration"),
-            {
-                "fields": ("secret",),
-                "description": _("Used for app-based and basic email MFA methods"),
-            },
-        ),
-        (
-            _("Backup Codes"),
-            {
-                "fields": ("_backup_codes",),
-            },
-        ),
         (
             _("Single-Use Token (Secure Email)"),
             {
