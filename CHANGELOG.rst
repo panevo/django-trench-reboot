@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.3.8 (Unreleased)
+0.3.9 (2025-10-20)
 ==================
 
 **Security Enhancement: New Secure Email Backend**
@@ -10,7 +10,7 @@ Changelog
 * **Added ``secure_email`` backend**: A new email MFA backend that uses single-use random codes instead of TOTP
 * **Addresses security vulnerability**: The existing ``basic_email`` backend uses TOTP codes that remain valid for multiple uses within a time window. The new ``secure_email`` backend generates cryptographically secure, single-use codes
 * **Key features**:
-  
+
   * Single-use codes that are invalidated after successful validation
   * Cryptographically secure random code generation using Python's ``secrets`` module
   * SHA-256 hashing of codes before database storage (no plaintext codes)
@@ -20,7 +20,7 @@ Changelog
   * Comprehensive logging without exposing codes
 
 * **Database changes**: Added three new fields to ``MFAMethod`` model:
-  
+
   * ``token_hash``: SHA-256 hash of the single-use token
   * ``token_expires_at``: Expiration timestamp
   * ``token_failures``: Failed validation attempt counter
@@ -41,11 +41,13 @@ To use the new secure email backend:
 
 See the documentation for detailed configuration examples.
 
+0.3.8 (TANKED)
+==================
 
 0.3.7 (2025-08-13)
 ==================
 
-* Speed up second-step MFA code validation by optimizing backup code check order 
+* Speed up second-step MFA code validation by optimizing backup code check order
 
 
 0.3.6 (2025-06-17)
