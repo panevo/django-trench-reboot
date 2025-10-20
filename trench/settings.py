@@ -103,6 +103,15 @@ DEFAULTS = {
             EMAIL_PLAIN_TEMPLATE: "trench/backends/email/code.txt",
             EMAIL_HTML_TEMPLATE: "trench/backends/email/code.html",
         },
+        "secure_email": {
+            VERBOSE_NAME: _("secure_email"),
+            HANDLER: "trench.backends.secure_mail.SecureMailMessageDispatcher",
+            SOURCE_FIELD: "email",
+            EMAIL_SUBJECT: _("Your verification code"),
+            EMAIL_PLAIN_TEMPLATE: "trench/backends/email/code.txt",
+            EMAIL_HTML_TEMPLATE: "trench/backends/email/code.html",
+            "TOKEN_VALIDITY": 600,  # 10 minutes in seconds
+        },
         "app": {
             VERBOSE_NAME: _("app"),
             VALIDITY_PERIOD: 30,

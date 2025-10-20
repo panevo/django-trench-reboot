@@ -16,7 +16,7 @@ DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 CORS_ORIGIN_ALLOW_ALL = env.bool("CORS_ORIGIN_ALLOW_ALL", default=False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-STATIC_ROOT= os.path.join(BASE_DIR, 'static/')
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -168,6 +168,15 @@ TRENCH_AUTH = {
             "EMAIL_SUBJECT": "Your verification code",
             "EMAIL_PLAIN_TEMPLATE": "trench/backends/email/code.txt",
             "EMAIL_HTML_TEMPLATE": "trench/backends/email/code.html",
+        },
+        "secure_email": {
+            "VERBOSE_NAME": "secure_email",
+            "HANDLER": "trench.backends.secure_mail.SecureMailMessageDispatcher",
+            "SOURCE_FIELD": "email",
+            "EMAIL_SUBJECT": "Your verification code",
+            "EMAIL_PLAIN_TEMPLATE": "trench/backends/email/code.txt",
+            "EMAIL_HTML_TEMPLATE": "trench/backends/email/code.html",
+            "TOKEN_VALIDITY": 600,  # 10 minutes in seconds
         },
         "app": {
             "VERBOSE_NAME": "app",

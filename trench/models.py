@@ -4,7 +4,9 @@ from django.db.models import (
     BooleanField,
     CharField,
     CheckConstraint,
+    DateTimeField,
     ForeignKey,
+    IntegerField,
     Manager,
     Model,
     Q,
@@ -73,6 +75,25 @@ class MFAMethod(Model):
     is_primary = BooleanField(_("is primary"), default=False)
     is_active = BooleanField(_("is active"), default=False)
     _backup_codes = TextField(_("backup codes"), blank=True)
+    # Fields for single-use token support (e.g., for email backend)
+    token_hash = CharField(
+        _("token hash"),
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text=_("SHA-256 hash of the single-use verification token"),
+    )
+    token_expires_at = DateTimeField(
+        _("token expires at"),
+        blank=True,
+        null=True,
+        help_text=_("Expiration timestamp for the single-use token"),
+    )
+    token_failures = IntegerField(
+        _("token failures"),
+        default=0,
+        help_text=_("Number of failed validation attempts for the current token"),
+    )
 
     class Meta:
         verbose_name = _("MFA Method")

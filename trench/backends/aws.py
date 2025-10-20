@@ -12,6 +12,7 @@ from trench.responses import (
 from trench.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_REGION
 from botocore.exceptions import ClientError, EndpointConnectionError
 
+
 class AWSMessageDispatcher(AbstractMessageDispatcher):
     _SMS_BODY = _("Your verification code is: ")
     _SUCCESS_DETAILS = _("SMS message with MFA code has been sent.")

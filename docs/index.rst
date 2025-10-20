@@ -11,6 +11,7 @@ Contents
    settings
    endpoints
    backends
+   secure_email_migration
 
 
 Indices and tables

@@ -2,6 +2,46 @@
 Changelog
 =========
 
+0.3.8 (Unreleased)
+==================
+
+**Security Enhancement: New Secure Email Backend**
+
+* **Added ``secure_email`` backend**: A new email MFA backend that uses single-use random codes instead of TOTP
+* **Addresses security vulnerability**: The existing ``basic_email`` backend uses TOTP codes that remain valid for multiple uses within a time window. The new ``secure_email`` backend generates cryptographically secure, single-use codes
+* **Key features**:
+  
+  * Single-use codes that are invalidated after successful validation
+  * Cryptographically secure random code generation using Python's ``secrets`` module
+  * SHA-256 hashing of codes before database storage (no plaintext codes)
+  * Configurable expiration (default 10 minutes)
+  * Brute-force protection (5 failed attempts = lockout)
+  * Thread-safe implementation using ``select_for_update()``
+  * Comprehensive logging without exposing codes
+
+* **Database changes**: Added three new fields to ``MFAMethod`` model:
+  
+  * ``token_hash``: SHA-256 hash of the single-use token
+  * ``token_expires_at``: Expiration timestamp
+  * ``token_failures``: Failed validation attempt counter
+
+* **Admin enhancements**: Updated admin interface to display token status, expiration time, and failure count (never shows actual codes)
+* **Backward compatibility**: The ``basic_email`` backend remains available and unchanged
+* **Migration path**: Users can switch to ``secure_email`` by updating their ``TRENCH_AUTH`` configuration
+* **Documentation**: Added comprehensive documentation for the new backend in ``backends.rst`` and ``settings.rst``
+* **Tests**: Added 21 comprehensive tests covering all aspects of the secure email backend
+
+**Migration Instructions**:
+
+To use the new secure email backend:
+
+1. Run migrations: ``python manage.py migrate``
+2. Update your ``TRENCH_AUTH`` settings to use ``'trench.backends.secure_mail.SecureMailMessageDispatcher'`` as the handler for your email MFA method
+3. Optionally configure ``TOKEN_VALIDITY`` (default: 600 seconds)
+
+See the documentation for detailed configuration examples.
+
+
 0.3.7 (2025-08-13)
 ==================
 
