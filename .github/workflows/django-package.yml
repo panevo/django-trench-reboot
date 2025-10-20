@@ -14,29 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Python 3.9 supports Django 3.2, 4.0, 4.1, 4.2
-          - python-version: "3.9"
-            django-version: "3.2.25"
-          - python-version: "3.9"
-            django-version: "4.0.10"
-          - python-version: "3.9"
-            django-version: "4.1.13"
-          - python-version: "3.9"
-            django-version: "4.2.16"
-          # Python 3.10 supports Django 3.2, 4.0, 4.1, 4.2, 5.0
-          - python-version: "3.10"
-            django-version: "3.2.25"
-          - python-version: "3.10"
-            django-version: "4.0.10"
-          - python-version: "3.10"
-            django-version: "4.1.13"
+          # Python 3.10 supports Django 4.2, 5.0
           - python-version: "3.10"
             django-version: "4.2.16"
           - python-version: "3.10"
             django-version: "5.0.14"
-          # Python 3.11 supports Django 4.1, 4.2, 5.0, 5.1
-          - python-version: "3.11"
-            django-version: "4.1.13"
+          # Python 3.11 supports Django 4.2, 5.0, 5.1
           - python-version: "3.11"
             django-version: "4.2.16"
           - python-version: "3.11"
