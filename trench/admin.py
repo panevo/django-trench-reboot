@@ -24,6 +24,8 @@ class MFAMethodAdmin(admin.ModelAdmin):
         'token_expires_at',
         'token_failures',
     ]
+    # Exclude sensitive fields from admin to prevent security issues
+    exclude = ['token_hash']
 
     fieldsets = (
         (None, {
@@ -39,7 +41,7 @@ class MFAMethodAdmin(admin.ModelAdmin):
         (_('Single-Use Token (Secure Email)'), {
             'fields': ( 'token_expires_at', 'token_failures'),
             'description': _(
-                'Used for secure email MFA.'
+                'Used for secure email MFA. Token hash is never displayed for security.'
             ),
         }),
     )
@@ -91,11 +93,3 @@ class MFAMethodAdmin(admin.ModelAdmin):
                 '<span style="color: orange;">{}</span>',
                 obj.token_failures
             )
-
-    @admin.display(description=_('Token Hash'))
-    def token_hash_display(self, obj):
-        """Display truncated token hash (not the actual token)."""
-        if obj.token_hash:
-            # Show first 8 and last 8 characters for verification purposes
-            return f"{obj.token_hash[:8]}...{obj.token_hash[-8:]}"
-        return _('No token')

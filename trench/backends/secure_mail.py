@@ -148,7 +148,11 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
 
     def _hash_code(self, code: str) -> str:
         """
-        Hash a code using SHA-256.
+        Hash a code using SHA-256 with the MFA method's secret as salt.
+
+        Even though the code space is small (1 million codes), an attacker with
+        database access could pre-compute all hashes and reverse them. Using the
+        MFA method's secret as a per-user salt prevents this rainbow table attack.
 
         Args:
             code: The plaintext code to hash
@@ -156,7 +160,12 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
         Returns:
             The SHA-256 hash as a hexadecimal string (64 characters)
         """
-        return hashlib.sha256(code.encode('utf-8')).hexdigest()
+        # Use the MFA method's secret as salt (unique per user and per MFA method)
+        salt = self._mfa_method.secret
+
+        # Combine salt and code before hashing
+        salted_code = f"{salt}{code}"
+        return hashlib.sha256(salted_code.encode('utf-8')).hexdigest()
 
     def validate_code(self, code: str) -> bool:
         """
@@ -219,7 +228,7 @@ class SecureMailMessageDispatcher(AbstractMessageDispatcher):
                 mfa_method.save(update_fields=['token_hash', 'token_expires_at', 'token_failures'])
                 return False
 
-            # Hash the provided code and compare
+            # Hash the provided code with the same salt used during generation
             code_hash = self._hash_code(code)
 
             if code_hash == mfa_method.token_hash:
