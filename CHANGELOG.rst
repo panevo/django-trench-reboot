@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.3.9 (2025-10-20)
+0.3.10 (2025-10-20)
 ==================
 
 **Security Enhancement: New Secure Email Backend**
@@ -41,6 +41,7 @@ To use the new secure email backend:
 
 See the documentation for detailed configuration examples.
 
+0.3.9 (TANKED)
 0.3.8 (TANKED)
 ==================
 
