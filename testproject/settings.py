@@ -1,4 +1,5 @@
 import datetime
+import django
 import environ
 import os
 
@@ -94,7 +95,13 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Django 6.1 deprecated EMAIL_BACKEND in favour of MAILERS
+if django.VERSION >= (6, 1):
+    MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}
+    }
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
