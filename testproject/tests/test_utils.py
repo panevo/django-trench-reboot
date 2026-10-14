@@ -1,5 +1,7 @@
 import pytest
 
+from django.utils.crypto import salted_hmac
+
 from trench.backends.application import ApplicationMessageDispatcher
 from trench.backends.base import AbstractMessageDispatcher
 from trench.backends.provider import get_mfa_handler
@@ -17,6 +19,20 @@ def test_empty_token():
 def test_invalid_token():
     token = UserTokenGenerator()
     assert token.check_token(user=None, token="test") is None
+
+
+@pytest.mark.django_db
+def test_token_hash_uses_sha256(active_user):
+    generator = UserTokenGenerator()
+    timestamp = 1700000000
+    token = generator._make_token_with_timestamp(active_user, timestamp)
+    expected_hash = salted_hmac(
+        generator.KEY_SALT,
+        generator._make_hash_value(active_user, timestamp),
+        secret=generator.SECRET,
+        algorithm="sha256",
+    ).hexdigest()
+    assert token.rsplit("-", 1)[1] == expected_hash
 
 
 @pytest.mark.django_db
