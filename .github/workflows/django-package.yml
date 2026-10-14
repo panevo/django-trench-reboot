@@ -16,7 +16,7 @@ jobs:
     env:
       PYTHONPATH: ./testproject
       DJANGO_SETTINGS_MODULE: settings
-      SECRET_KEY: this_is_no_secret_at_all
+      SECRET_KEY: this_is_no_secret_it_is_only_used_for_the_tests
     strategy:
       fail-fast: false
       matrix:

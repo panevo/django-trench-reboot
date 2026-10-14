@@ -124,7 +124,7 @@ Local development
 
         export PYTHONPATH=./testproject
         export DJANGO_SETTINGS_MODULE=settings
-        export SECRET_KEY=YOURsecretGOEShere
+        export SECRET_KEY=YOURsecretOfAtLeast32CharactersGOEShere
 
 6. Create a symbolic link to the :code:`trench/` module inside the :code:`testproject/` directory to emulate the :code:`trench` package being installed.
 
