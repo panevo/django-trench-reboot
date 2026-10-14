@@ -58,6 +58,7 @@ class UserTokenGenerator(PasswordResetTokenGenerator):
             self.KEY_SALT,
             self._make_hash_value(user, timestamp),
             secret=self.SECRET,
+            algorithm=self.algorithm,
         ).hexdigest()
         return f"{user.pk}-{ts_b36}-{token_hash}"
 
