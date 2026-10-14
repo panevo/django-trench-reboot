@@ -2,6 +2,8 @@
 
 from django.db import migrations, models
 
+from trench.compat import check_constraint_condition
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -29,10 +31,12 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="mfamethod",
             constraint=models.CheckConstraint(
-                check=models.Q(
-                    models.Q(("is_primary", True), ("is_active", True)),
-                    ("is_primary", False),
-                    _connector="OR",
+                **check_constraint_condition(
+                    models.Q(
+                        models.Q(("is_primary", True), ("is_active", True)),
+                        ("is_primary", False),
+                        _connector="OR",
+                    )
                 ),
                 name="primary_is_active",
             ),
