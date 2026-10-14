@@ -7,16 +7,13 @@ django-trench
 
 -----
 
-.. image:: https://github.com/merixstudio/django-trench/actions/workflows/django-package.yml/badge.svg
-  :target: https://github.com/merixstudio/django-trench/actions/workflows/django-package.yml
-
-.. image:: https://codecov.io/gh/merixstudio/django-trench/branch/master/graph/badge.svg?token=U4yDiXUDkb
-  :target: https://codecov.io/gh/merixstudio/django-trench
+.. image:: https://github.com/panevo/django-trench-reboot/actions/workflows/django-package.yml/badge.svg
+  :target: https://github.com/panevo/django-trench-reboot/actions/workflows/django-package.yml
 
 .. image:: https://readthedocs.org/projects/django-trench/badge/?version=latest
    :target: https://django-trench.readthedocs.io/en/latest/?badge=latest
 
-.. image:: https://img.shields.io/pypi/v/django-trench-reboot
+.. image:: https://img.shields.io/pypi/v/django-trench-reboot?cacheSeconds=3600
    :target: https://pypi.org/project/django-trench-reboot/
 
 | **django-trench** provides a set of REST API endpoints to supplement `django-rest-framework`_ with multi-factor authentication (MFA, 2FA). It supports both standard built-in authentication methods, as well as JWT (JSON Web Token).

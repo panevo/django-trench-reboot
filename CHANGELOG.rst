@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.4.0 (unreleased)
+0.4.0 (2026-10-14)
 ==================
 
 * Add support for Django 6.0 and 6.1 and Python 3.14

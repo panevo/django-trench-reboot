@@ -15,6 +15,9 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import re
+from pathlib import Path
+
 import sphinx_rtd_theme
 
 
@@ -24,10 +27,14 @@ project = "django-trench-reboot"
 copyright = "2018, Merixstudio"
 author = "Merixstudio"
 
+# The full version, including alpha/beta/rc tags, read from the package so it is
+# only set in one place
+release = re.search(
+    r'__version__ = "(.+)"',
+    (Path(__file__).parent.parent / "trench" / "__init__.py").read_text(),
+).group(1)
 # The short X.Y version
-version = "0.3"
-# The full version, including alpha/beta/rc tags
-release = "0.4.0"
+version = ".".join(release.split(".")[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -191,7 +198,7 @@ epub_exclude_files = ["search.html"]
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/": None}
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # -- Options for todo extension ----------------------------------------------
 
