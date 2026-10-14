@@ -96,6 +96,5 @@ class TrenchAPIClient(APIClient):
         return jwt.decode(
             response.data.get(token_field),
             key=settings.SECRET_KEY,
-            verify=False,
             algorithms=["HS256"],
         ).get(User.USERNAME_FIELD)
