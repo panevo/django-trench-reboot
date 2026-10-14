@@ -8,6 +8,7 @@ setup(
     version=__version__,
     packages=find_packages(exclude=("testproject", "testproject.*")),
     include_package_data=True,
+    python_requires=">=3.10",
     license="MIT License",
     description="REST Multi-factor authentication package for Django",
     long_description=open("README.rst").read(),
@@ -37,6 +38,8 @@ setup(
         "Framework :: Django :: 5.0",
         "Framework :: Django :: 5.1",
         "Framework :: Django :: 5.2",
+        "Framework :: Django :: 6.0",
+        "Framework :: Django :: 6.1",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -45,5 +48,6 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
 )
