@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 from typing import Any, Iterable
 
+from trench.compat import check_constraint_condition
 from trench.exceptions import MFAMethodDoesNotExistError
 
 
@@ -109,7 +110,9 @@ class MFAMethod(Model):
                 name="unique_user_is_primary",
             ),
             CheckConstraint(
-                check=(Q(is_primary=True) & Q(is_active=True)) | Q(is_primary=False),
+                **check_constraint_condition(
+                    (Q(is_primary=True) & Q(is_active=True)) | Q(is_primary=False)
+                ),
                 name="primary_is_active",
             ),
         )

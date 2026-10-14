@@ -2,8 +2,17 @@
 Changelog
 =========
 
-0.3.10 (2025-10-20)
+0.4.0 (unreleased)
 ==================
+
+* Add support for Django 6.0 and 6.1 and Python 3.14
+* Fix ``CheckConstraint`` on Django 6.0 and newer, which removed the ``check`` argument
+* Set ``default_auto_field`` for the trench app, so that projects that use ``BigAutoField`` (the default since Django 6.0) don't get a new migration for trench
+* The ephemeral tokens used between the first and second authentication step now use SHA-256 instead of SHA-1. Users who are in the middle of logging in when this version is deployed will need to log in again
+* Fix the test workflow, which installed a different Django version than the one being tested on Python 3.12 and newer
+
+0.3.10 (2025-10-20)
+===================
 
 **Security Enhancement: New Secure Email Backend**
 
