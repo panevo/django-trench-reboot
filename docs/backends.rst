@@ -8,7 +8,7 @@ Built-in backends
 """""""""""""""""
 
 E-mail
-*****
+******
 
 **Two email backends are available:**
 
