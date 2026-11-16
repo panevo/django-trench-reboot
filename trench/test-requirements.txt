@@ -18,6 +18,7 @@ pytest-django
 attrs
 coverage
 flaky
+freezegun
 
 isort
 flake8

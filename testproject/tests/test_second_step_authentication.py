@@ -2,7 +2,9 @@ import pytest
 
 from django.contrib.auth import get_user_model
 
+from datetime import timedelta
 from flaky import flaky
+from freezegun import freeze_time
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_204_NO_CONTENT,
@@ -10,7 +12,6 @@ from rest_framework.status import (
     HTTP_401_UNAUTHORIZED,
 )
 from rest_framework.test import APIClient
-from time import sleep
 from twilio.base.exceptions import TwilioException, TwilioRestException
 
 from tests.utils import TrenchAPIClient
@@ -49,61 +50,64 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
     ORIGINAL_VALIDITY_PERIOD = settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
     ]
-    # For more reliable testing, use a fixed period that's long enough to avoid edge cases
-    # but short enough to test with reasonable sleep time
     VALIDITY_PERIOD = 10  # 10 seconds
     settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = VALIDITY_PERIOD
 
-    try:
-        # Get MFA method and handler
-        mfa_method = active_user_with_email_otp.mfa_methods.first()
-        handler = get_mfa_handler(mfa_method=mfa_method)
-        client = TrenchAPIClient()
+    # Freeze the clock at the very start of a validity period. Against the real
+    # clock, a code generated just before a period boundary is already expired by
+    # the time the request verifying it arrives. 2026-01-01 00:00:00 UTC is an exact
+    # multiple of the period, so the frozen code stays valid until we move the clock.
+    with freeze_time("2026-01-01 00:00:00") as frozen_time:
+        try:
+            # Get MFA method and handler
+            mfa_method = active_user_with_email_otp.mfa_methods.first()
+            handler = get_mfa_handler(mfa_method=mfa_method)
+            client = TrenchAPIClient()
 
-        # Get first factor authentication with ephemeral token
-        response_first_step = client._first_factor_request(
-            user=active_user_with_email_otp
-        )
-        ephemeral_token = client._extract_ephemeral_token_from_response(
-            response=response_first_step
-        )
+            # Get first factor authentication with ephemeral token
+            response_first_step = client._first_factor_request(
+                user=active_user_with_email_otp
+            )
+            ephemeral_token = client._extract_ephemeral_token_from_response(
+                response=response_first_step
+            )
 
-        # Get a fresh code for immediate use and test it works
-        response_good = client._second_factor_request(
-            handler=handler,  # This generates a fresh code at request time
-            ephemeral_token=ephemeral_token,
-        )
-        assert (
-            response_good.status_code == HTTP_200_OK
-        ), "Fresh code should authenticate successfully"
+            # Get a fresh code for immediate use and test it works
+            response_good = client._second_factor_request(
+                handler=handler,  # This generates a fresh code at request time
+                ephemeral_token=ephemeral_token,
+            )
+            assert (
+                response_good.status_code == HTTP_200_OK
+            ), "Fresh code should authenticate successfully"
 
-        # Now we'll test that an old code fails after it expires
-        # Get another first factor authentication with a fresh ephemeral token
-        response_first_step = client._first_factor_request(
-            user=active_user_with_email_otp
-        )
-        ephemeral_token = client._extract_ephemeral_token_from_response(
-            response=response_first_step
-        )
+            # Now we'll test that an old code fails after it expires
+            # Get another first factor authentication with a fresh ephemeral token
+            response_first_step = client._first_factor_request(
+                user=active_user_with_email_otp
+            )
+            ephemeral_token = client._extract_ephemeral_token_from_response(
+                response=response_first_step
+            )
 
-        # Get code now but use it after it expires
-        code_to_expire = handler.create_code()
+            # Get code now but use it after it expires
+            code_to_expire = handler.create_code()
 
-        # Wait for at least validity period + 1 second to ensure full expiration
-        sleep(VALIDITY_PERIOD + 3)
+            # Move the clock past the end of the validity period
+            frozen_time.tick(timedelta(seconds=VALIDITY_PERIOD + 3))
 
-        # Code should now be expired
-        response_expired = client._second_factor_request(
-            code=code_to_expire, ephemeral_token=ephemeral_token
-        )
-        assert (
-            response_expired.status_code == HTTP_401_UNAUTHORIZED
-        ), "Expired code should fail authentication"
-    finally:
-        # Restore original settings
-        settings.TRENCH_AUTH["MFA_METHODS"]["email"][
-            "VALIDITY_PERIOD"
-        ] = ORIGINAL_VALIDITY_PERIOD
+            # Code should now be expired
+            response_expired = client._second_factor_request(
+                code=code_to_expire, ephemeral_token=ephemeral_token
+            )
+            assert (
+                response_expired.status_code == HTTP_401_UNAUTHORIZED
+            ), "Expired code should fail authentication"
+        finally:
+            # Restore original settings
+            settings.TRENCH_AUTH["MFA_METHODS"]["email"][
+                "VALIDITY_PERIOD"
+            ] = ORIGINAL_VALIDITY_PERIOD
 
     settings.TRENCH_AUTH["MFA_METHODS"]["email"][
         "VALIDITY_PERIOD"
