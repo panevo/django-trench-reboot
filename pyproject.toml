@@ -12,7 +12,6 @@ license-files = ["LICENSE", "AUTHORS"]
 authors = [{ name = "Panevo Services Ltd.", email = "info@panevo.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    # pyotp 2.11.2 made provisioning_uri's arguments keyword-only and trench passes them positionally.
     "pyotp==2.10.0",
     "twilio>=6.56.0",
     "yubico-client>=1.13.0",
