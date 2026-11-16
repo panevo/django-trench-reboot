@@ -5,7 +5,7 @@ Changelog
 0.4.1 (unreleased)
 ==================
 
-* Require ``pyotp`` older than 2.11.2. Newer releases make the arguments of ``provisioning_uri`` keyword-only, which breaks setting up an authenticator app, and 2.12.0 also rejects the secrets and intervals the test suite uses
+* Require ``pyotp`` 2.10.0 exactly. Newer releases make the arguments of ``provisioning_uri`` keyword-only, which breaks setting up an authenticator app, and 2.12.0 also rejects the secrets and intervals the test suite uses
 
 0.4.0 (2026-10-14)
 ==================
