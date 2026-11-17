@@ -2,7 +2,9 @@ import pytest
 
 from django.contrib.auth import get_user_model
 
+from datetime import timedelta
 from flaky import flaky
+from freezegun import freeze_time
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_204_NO_CONTENT,
@@ -10,8 +12,8 @@ from rest_framework.status import (
     HTTP_401_UNAUTHORIZED,
 )
 from rest_framework.test import APIClient
-from time import sleep
 from twilio.base.exceptions import TwilioException, TwilioRestException
+from unittest.mock import patch
 
 from tests.utils import TrenchAPIClient
 from trench.backends.provider import get_mfa_handler
@@ -44,17 +46,16 @@ def test_mfa_model(active_user_with_email_otp):
 @pytest.mark.django_db
 def test_custom_validity_period(active_user_with_email_otp, settings):
     # Test that TOTP codes have a limited validity period
-
-    # Save original validity period
-    ORIGINAL_VALIDITY_PERIOD = settings.TRENCH_AUTH["MFA_METHODS"]["email"][
-        "VALIDITY_PERIOD"
-    ]
-    # For more reliable testing, use a fixed period that's long enough to avoid edge cases
-    # but short enough to test with reasonable sleep time
     VALIDITY_PERIOD = 10  # 10 seconds
-    settings.TRENCH_AUTH["MFA_METHODS"]["email"]["VALIDITY_PERIOD"] = VALIDITY_PERIOD
 
-    try:
+    # Freezing the clock makes generating a code and verifying it happen at the
+    # same instant. With the real clock, a code generated just before a period
+    # boundary can already be expired when the request verifying it arrives.
+    # settings.TRENCH_AUTH is mutated in place, so patch.dict is what restores it.
+    with patch.dict(
+        settings.TRENCH_AUTH["MFA_METHODS"]["email"],
+        {"VALIDITY_PERIOD": VALIDITY_PERIOD},
+    ), freeze_time("2026-01-01 00:00:00") as frozen_time:
         # Get MFA method and handler
         mfa_method = active_user_with_email_otp.mfa_methods.first()
         handler = get_mfa_handler(mfa_method=mfa_method)
@@ -89,8 +90,8 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
         # Get code now but use it after it expires
         code_to_expire = handler.create_code()
 
-        # Wait for at least validity period + 1 second to ensure full expiration
-        sleep(VALIDITY_PERIOD + 3)
+        # Move the clock past the end of the validity period
+        frozen_time.tick(timedelta(seconds=VALIDITY_PERIOD + 3))
 
         # Code should now be expired
         response_expired = client._second_factor_request(
@@ -99,15 +100,6 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
         assert (
             response_expired.status_code == HTTP_401_UNAUTHORIZED
         ), "Expired code should fail authentication"
-    finally:
-        # Restore original settings
-        settings.TRENCH_AUTH["MFA_METHODS"]["email"][
-            "VALIDITY_PERIOD"
-        ] = ORIGINAL_VALIDITY_PERIOD
-
-    settings.TRENCH_AUTH["MFA_METHODS"]["email"][
-        "VALIDITY_PERIOD"
-    ] = ORIGINAL_VALIDITY_PERIOD
 
 
 @flaky
