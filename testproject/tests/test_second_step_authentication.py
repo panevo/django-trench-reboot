@@ -48,10 +48,10 @@ def test_custom_validity_period(active_user_with_email_otp, settings):
     # Test that TOTP codes have a limited validity period
     VALIDITY_PERIOD = 10  # 10 seconds
 
-    # Freeze the clock at the very start of a validity period. Against the real
-    # clock, a code generated just before a period boundary is already expired by
-    # the time the request verifying it arrives. 2026-01-01 00:00:00 UTC is an exact
-    # multiple of the period, so the frozen code stays valid until we move the clock.
+    # Freezing the clock makes generating a code and verifying it happen at the
+    # same instant. With the real clock, a code generated just before a period
+    # boundary can already be expired when the request verifying it arrives.
+    # settings.TRENCH_AUTH is mutated in place, so patch.dict is what restores it.
     with patch.dict(
         settings.TRENCH_AUTH["MFA_METHODS"]["email"],
         {"VALIDITY_PERIOD": VALIDITY_PERIOD},
