@@ -4,7 +4,7 @@ djangorestframework
 django-environ
 django-cors-headers
 djangorestframework-simplejwt
-pyotp
+pyotp==2.10.0
 twilio
 yubico-client
 smsapi-client
